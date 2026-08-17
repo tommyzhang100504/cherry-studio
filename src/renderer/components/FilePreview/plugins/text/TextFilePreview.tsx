@@ -90,13 +90,8 @@ function TextPreviewContent({ filePath, loadState }: TextPreviewContentProps): R
   if (loadState.status === 'error') return <TextPreviewError />
 
   return (
-    <div className="min-h-full w-full">
-      <CodeViewer
-        value={loadState.content}
-        language={getLanguageByFilePath(filePath)}
-        wrapped={false}
-        className="min-h-full w-full"
-      />
+    <div className="min-h-full w-full px-[1em]">
+      <CodeViewer value={loadState.content} language={getLanguageByFilePath(filePath)} className="min-h-full w-full" />
     </div>
   )
 }

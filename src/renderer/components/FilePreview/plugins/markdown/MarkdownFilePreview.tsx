@@ -93,7 +93,7 @@ function MarkdownPreviewContent({ loadState, markdownId, mode }: MarkdownPreview
 
   if (mode === 'source') {
     return (
-      <div className="flex min-h-full w-full">
+      <div className="flex min-h-full w-full px-[1em]">
         <Suspense fallback={<MarkdownPreviewLoading />}>
           <LazyCodeViewer
             value={loadState.content}
@@ -109,7 +109,7 @@ function MarkdownPreviewContent({ loadState, markdownId, mode }: MarkdownPreview
   if (loadState.content.trim().length === 0) return <MarkdownPreviewEmpty />
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl px-[1em]">
       <Markdown id={markdownId} plugins={MARKDOWN_PLUGINS} footnoteLabel={t('common.footnotes')}>
         {loadState.content}
       </Markdown>

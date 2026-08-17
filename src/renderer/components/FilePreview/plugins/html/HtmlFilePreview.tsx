@@ -106,7 +106,7 @@ function HtmlPreviewContent({ loadState, fileName, baseUrl, mode, previewType }:
 
   if (mode === 'source') {
     return (
-      <div className="flex min-h-full w-full">
+      <div className="flex min-h-full w-full px-[1em]">
         <Suspense fallback={<HtmlPreviewLoading />}>
           <LazyCodeViewer
             value={loadState.content}
