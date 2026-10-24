@@ -1,0 +1,64 @@
+name: Diagnose DPAPI PowerShell stall
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - diagnose/dpapi-stall
+  workflow_dispatch:
+
+concurrency:
+  group: diagnose-dpapi-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  platform:
+    name: platform (${{ matrix.batch }})
+    runs-on: windows-2022
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        batch: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    env:
+      CI: true
+      BATCH: ${{ matrix.batch }}
+      DPAPI_STAGE_LOG: ${{ github.workspace }}/dpapi-stage-${{ matrix.batch }}.log
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-validation
+        id: dependencies
+      - name: Run platform suite
+        shell: pwsh
+        timeout-minutes: 60
+        continue-on-error: true
+        run: |
+          $log = "platform-batch-$env:BATCH.log"
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          & pnpm check --group platform *>&1 | Tee-Object -FilePath $log
+          $code = $LASTEXITCODE
+          "exit=$code elapsed=$([int]$sw.Elapsed.TotalMilliseconds)ms" | Tee-Object -FilePath $log -Append
+          Write-Host "platform exit=$code elapsed=$([int]$sw.Elapsed.TotalMilliseconds)ms"
+      - name: Validate that the DPAPI test ran
+        if: always()
+        shell: pwsh
+        run: |
+          $stage = "dpapi-stage-$env:BATCH.log"
+          $platform = "platform-batch-$env:BATCH.log"
+          if (-not (Test-Path $stage)) { throw "missing $stage" }
+          if (-not (Select-String -Path $stage -Pattern 'fixture start' -Quiet)) { throw "stage log has no fixture start" }
+          if (-not (Select-String -Path $platform -Pattern 'browserCookieKey.test.ts' -Quiet)) { throw "platform log has no browserCookieKey test" }
+          Write-Host "stage log OK: $((Get-Content $stage | Measure-Object -Line).Lines) lines"
+      - name: Upload diagnostics
+        if: always()
+        timeout-minutes: 5
+        uses: actions/upload-artifact@v7
+        with:
+          name: dpapi-diagnostic-${{ matrix.batch }}
+          path: |
+            platform-batch-${{ matrix.batch }}.log
+            dpapi-stage-${{ matrix.batch }}.log
+          if-no-files-found: warn
+          retention-days: 14
